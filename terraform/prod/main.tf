@@ -10,7 +10,7 @@ locals {
 }
 
 module "ecr_repository" {
-  source = "../../modules/ecr"
+  source = "../modules/ecr"
 
   name                    = "${var.project_name}-${var.environment}"
   kms_key_arn             = null
@@ -21,7 +21,7 @@ module "ecr_repository" {
 }
 
 module "ecs_service" {
-  source = "../../modules/ecs_service"
+  source = "../modules/ecs_service"
 
   name                      = local.service_name
   environment               = var.environment

@@ -99,10 +99,19 @@ def create_app() -> FastAPI:
     def list_defects(
         query: Optional[str] = Query(None, description="Rally WSAPI formatted query string"),
         limit: Optional[int] = Query(None, ge=1, le=1000),
+        workspace: Optional[str] = Query(
+            None, description="Override workspace scope for this request"
+        ),
+        project: Optional[str] = Query(None, description="Override project scope for this request"),
         client: RallyClient = Depends(get_client),
     ) -> List[RallyDefectModel]:
         try:
-            defects = client.get_defects(query=query, limit=limit)
+            defects = client.get_defects(
+                query=query,
+                limit=limit,
+                workspace=workspace,
+                project=project,
+            )
         except ValueError as exc:
             raise HTTPException(status_code=500, detail=str(exc)) from exc
         except Exception as exc:  # noqa: BLE001
@@ -114,10 +123,19 @@ def create_app() -> FastAPI:
     def defect_analysis(
         query: Optional[str] = Query(None, description="Optional filter on defects"),
         limit: Optional[int] = Query(None, ge=1, le=1000),
+        workspace: Optional[str] = Query(
+            None, description="Override workspace scope for this request"
+        ),
+        project: Optional[str] = Query(None, description="Override project scope for this request"),
         client: RallyClient = Depends(get_client),
     ) -> DefectAnalysisModel:
         try:
-            defects = client.get_defects(query=query, limit=limit)
+            defects = client.get_defects(
+                query=query,
+                limit=limit,
+                workspace=workspace,
+                project=project,
+            )
             analysis = analyze_defects(defects)
         except ValueError as exc:
             raise HTTPException(status_code=500, detail=str(exc)) from exc
