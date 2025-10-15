@@ -18,6 +18,14 @@ class RallyConfig:
     def defects_endpoint(self) -> str:
         return f"{self.base_url.rstrip('/')}/slm/webservice/v2.0/defect"
 
+    @property
+    def artifact_endpoint(self) -> str:
+        return f"{self.base_url.rstrip('/')}/slm/webservice/v2.0/Artifact"
+
+    @property
+    def conversation_post_endpoint(self) -> str:
+        return f"{self.base_url.rstrip('/')}/slm/webservice/v2.0/conversationpost"
+
 
 def load_config(env_file: Optional[str] = None) -> RallyConfig:
     """Load Rally configuration from environment variables.

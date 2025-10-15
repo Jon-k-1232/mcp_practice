@@ -7,6 +7,11 @@ defect data, and surfaces analytics around potential root causes and trends.
 
 -  FastAPI service exposing `/defects` and `/defects/analysis` endpoints requiring a `workspace`
    query parameter plus convenient filters for state and ISO8601 date ranges.
+-  New `/artifacts/transcript` endpoint that takes a standup transcript, identifies referenced
+   Rally work items by formatted ID, updates their status/blocked flags automatically, and logs the
+   transcript snippet as a Rally conversation post.
+-  Manual artifact update endpoint for posting ad-hoc comments (and optional state/blocker changes)
+   to any Rally work item by formatted ID.
 -  Configurable through environment variables loaded from `.env`.
 -  Modular code structure splitting auth, client, and analytics logic.
 -  Heuristic analysis to highlight leading contributors and suspected causes.
@@ -47,9 +52,11 @@ defect data, and surfaces analytics around potential root causes and trends.
 
 -  `src/mcp_rally/config.py` – Loads environment configuration.
 -  `src/mcp_rally/auth/` – Authentication helpers (e.g., Rally API headers).
+-  `src/mcp_rally/api/` – FastAPI routers for defects and transcript processing.
+-  `src/mcp_rally/deps.py` – Shared dependency providers (Rally client/config instances).
 -  `src/mcp_rally/rally_client.py` – Handles REST calls to Rally.
 -  `src/mcp_rally/analysis/defects.py` – Aggregates and analyzes defect data.
--  `src/mcp_rally/server.py` – FastAPI application exposing MCP endpoints.
+-  `src/mcp_rally/server.py` – Application factory that wires routers into FastAPI.
 -  `scripts/run_server.py` – Convenience launcher for the server.
 -  `terraform/` – Infrastructure-as-code for dev and prod AWS environments.
 
@@ -75,6 +82,42 @@ Fetch closed defects updated in May 2024 for a given workspace:
 ```bash
 curl "http://localhost:8000/defects?workspace=TeamWorkspace&state=closed&updated_after=2024-05-01T00:00:00Z&updated_before=2024-05-31T23:59:59Z"
 ```
+
+### Standup Transcript Endpoint
+
+Submit a meeting transcript, providing the workspace (and optional project) scope:
+
+```bash
+curl -X POST "http://localhost:8000/artifacts/transcript" \
+  -H "Content-Type: application/json" \
+  -d '{
+        "workspace": "/workspace/123456789",
+        "project": "/project/987654321",
+        "transcript": "US12345 is in progress and should wrap tomorrow. DE54321 is blocked by the database migration."
+      }'
+```
+
+The response summarizes which artifacts were updated and which references (if any) were skipped
+because the type is unsupported or the transcript did not contain actionable status cues. Each
+successful update also adds the matching transcript snippet to the Rally item's discussion thread.
+
+### Manual Artifact Update Endpoint
+
+Record a one-off status/comment update for a specific artifact:
+
+```bash
+curl -X POST "http://localhost:8000/artifacts/manual" \
+  -H "Content-Type: application/json" \
+  -d '{
+        "workspace": "/workspace/123456789",
+        "formatted_id": "US12345",
+        "state": "In-Progress",
+        "comment": "Jon is the best and is wrapping this up today."
+      }'
+```
+
+The server updates any provided state/blocked fields and posts the supplied comment to the Rally
+discussion thread for that item.
 
 ## Next Steps
 

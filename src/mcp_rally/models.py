@@ -51,3 +51,63 @@ class RallyDefect:
             ],
             raw=payload,
         )
+
+
+def _extract_state(value: Any) -> Optional[str]:
+    if value is None:
+        return None
+    if isinstance(value, dict):
+        return value.get("_refObjectName") or value.get("Name")
+    return str(value)
+
+
+@dataclass(slots=True)
+class RallyArtifact:
+    """Generic representation of a Rally work item."""
+
+    formatted_id: str
+    name: str
+    ref: str
+    type: str
+    state: Optional[str]
+    schedule_state: Optional[str]
+    blocked: Optional[bool]
+    blocked_reason: Optional[str]
+    raw: Dict[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_rally(cls, payload: Dict[str, Any]) -> "RallyArtifact":
+        blocked_value = payload.get("Blocked")
+        if isinstance(blocked_value, str):
+            blocked = blocked_value.lower() == "true"
+        elif isinstance(blocked_value, bool):
+            blocked = blocked_value
+        else:
+            blocked = None
+
+        return cls(
+            formatted_id=payload.get("FormattedID", ""),
+            name=payload.get("Name", ""),
+            ref=payload.get("_ref", ""),
+            type=payload.get("_type", ""),
+            state=_extract_state(payload.get("State")),
+            schedule_state=_extract_state(payload.get("ScheduleState")),
+            blocked=blocked,
+            blocked_reason=payload.get("BlockedReason"),
+            raw=payload,
+        )
+
+
+@dataclass(slots=True)
+class ArtifactUpdateResult:
+    """Outcome of an attempted Rally artifact update."""
+
+    formatted_id: str
+    artifact_type: str
+    applied_state_field: Optional[str]
+    applied_state: Optional[str]
+    blocked: Optional[bool]
+    blocked_reason: Optional[str]
+    summary: str
+    comment_posted: bool
+    comment_text: Optional[str]
