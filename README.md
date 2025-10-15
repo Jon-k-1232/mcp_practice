@@ -97,17 +97,45 @@ defect data, and surfaces analytics around potential root causes and trends.
 
 -  Push your Docker image to the provisioned ECR repo using the value output as `ecr_repository_url`.
 
-### Example API Call
+## Endpoint Usage
 
-Fetch closed defects updated in May 2024 for a given workspace:
+### Defect Insights (`GET /defects`, `GET /defects/analysis`)
 
-```bash
-curl "http://localhost:8000/defects?workspace=TeamWorkspace&state=closed&updated_after=2024-05-01T00:00:00Z&updated_before=2024-05-31T23:59:59Z"
-```
+Purpose: investigate defect data, track trends, and spot root causes.
 
-### Standup Transcript Endpoint
+1. Configure your Rally scope by supplying the `workspace` (e.g., `/workspace/123456789`).
+2. Optionally add filters such as `state`, `project`, `limit`, `created_after`, `updated_after`, or a
+   WSAPI `query`.
+3. Call:
 
-Submit a meeting transcript, providing the workspace (and optional project) scope:
+   ```bash
+   curl "http://localhost:8000/defects?workspace=/workspace/123456789&state=In-Progress&limit=50"
+   ```
+
+4. For aggregate analytics, use the `/defects/analysis` variant with the same parameters:
+
+   ```bash
+   curl "http://localhost:8000/defects/analysis?workspace=/workspace/123456789&state=Closed"
+   ```
+
+   The response summarizes totals, state/severity distribution, leading owners/tags, weekly trend
+   buckets, and heuristic root-cause cues.
+
+### Standup Transcript Automation (`POST /artifacts/transcript`)
+
+Purpose: feed a meeting transcript and let the server update Rally items automatically.
+
+Steps:
+
+1. Ensure your transcript references Rally work items by formatted ID (e.g., `US12345`, `DE54321`).
+2. POST JSON containing:
+   - `workspace` (`/workspace/{oid}`) and optional `project`.
+   - `transcript` with the full text/summary.
+3. The service parses the text, maps status keywords to valid state/blocked updates, applies them
+   where the artifact type allows, and posts the snippet as a comment.
+4. The response lists which artifacts were updated and which were skipped with reasons.
+
+Example:
 
 ```bash
 curl -X POST "http://localhost:8000/artifacts/transcript" \
@@ -119,27 +147,30 @@ curl -X POST "http://localhost:8000/artifacts/transcript" \
       }'
 ```
 
-The response summarizes which artifacts were updated and which references (if any) were skipped
-because the type is unsupported or the transcript did not contain actionable status cues. Each
-successful update also adds the matching transcript snippet to the Rally item's discussion thread.
+### Manual Artifact Update (`POST /artifacts/manual`)
 
-### Manual Artifact Update Endpoint
+Purpose: post an ad-hoc comment (optionally adjusting state/blocked) to any Rally artifact.
 
-Record a one-off status/comment update for a specific artifact:
+Steps:
 
-```bash
-curl -X POST "http://localhost:8000/artifacts/manual" \
-  -H "Content-Type: application/json" \
-  -d '{
-        "workspace": "/workspace/123456789",
-        "formatted_id": "US12345",
-        "state": "In-Progress",
-        "comment": "Jon is the best and is wrapping this up today."
-      }'
-```
+1. Gather the target `formatted_id` and scope identifiers.
+2. Compose the comment text you want stored in the artifact’s discussion thread.
+3. Optionally include `state`, `blocked`, and `blocked_reason` to change structured fields.
+4. Send the request:
 
-The server updates any provided state/blocked fields and posts the supplied comment to the Rally
-discussion thread for that item.
+   ```bash
+   curl -X POST "http://localhost:8000/artifacts/manual" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "workspace": "/workspace/123456789",
+           "formatted_id": "US12345",
+           "state": "In-Progress",
+           "comment": "Jon is the best and is wrapping this up today."
+         }'
+   ```
+
+5. The server applies the field updates (when the artifact type supports them) and posts the comment
+   as a Rally ConversationPost.
 
 ## Next Steps
 
