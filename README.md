@@ -48,6 +48,28 @@ defect data, and surfaces analytics around potential root causes and trends.
    The API will be available at [http://localhost:8000](http://localhost:8000) with an OpenAPI UI at
    `/docs`.
 
+## Branching Strategy
+
+-  `master` – Production copy used for releases and long-term archival.
+-  `production` – Tracks the code that is currently deployed.
+-  `develop` – Integration branch for active development.
+-  Personal work should branch off `develop` using your name followed by a short slug, e.g.
+   `git checkout -b jane-update-transcript` from `develop`.
+
+## Environment Configuration
+
+-  `.env` lives at the project root (`mcp_practice/.env`) and is loaded automatically by the app.
+-  At minimum set:
+
+   ```env
+   RALLY_API_KEY=your_api_key_here
+   RALLY_BASE_URL=https://rally1.rallydev.com
+   RALLY_PAGE_SIZE=2000
+   ```
+
+-  When working on multiple environments, keep separate `.env` files (e.g. `.env.dev`, `.env.prod`)
+   and point `load_config` to the desired file via the `env_file` argument (see `src/mcp_rally/config.py`).
+
 ## Project Layout
 
 -  `src/mcp_rally/config.py` – Loads environment configuration.
