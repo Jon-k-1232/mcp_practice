@@ -5,8 +5,8 @@ defect data, and surfaces analytics around potential root causes and trends.
 
 ## Features
 
--  FastAPI service exposing `/defects` and `/defects/analysis` endpoints with optional `workspace`
-   and `project` overrides on each call.
+-  FastAPI service exposing `/defects` and `/defects/analysis` endpoints requiring a `workspace`
+   query parameter and optional per-call project overrides.
 -  Configurable through environment variables loaded from `.env`.
 -  Modular code structure splitting auth, client, and analytics logic.
 -  Heuristic analysis to highlight leading contributors and suspected causes.
@@ -32,8 +32,7 @@ defect data, and surfaces analytics around potential root causes and trends.
 
    -  `RALLY_API_KEY` – Rally personal API key.
    -  `RALLY_BASE_URL` – Rally instance base URL (defaults to `https://rally1.rallydev.com`).
-   -  `RALLY_WORKSPACE` – Optional workspace scope.
-   -  `RALLY_PROJECT` – Optional project scope.
+   -  `RALLY_PAGE_SIZE` – Page size for Rally queries (defaults to `2000`).
 
 4. **Run the server**
 

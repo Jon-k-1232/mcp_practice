@@ -99,12 +99,16 @@ def create_app() -> FastAPI:
     def list_defects(
         query: Optional[str] = Query(None, description="Rally WSAPI formatted query string"),
         limit: Optional[int] = Query(None, ge=1, le=1000),
-        workspace: Optional[str] = Query(
-            None, description="Override workspace scope for this request"
-        ),
+        workspace: str = Query(..., description="Workspace scope for this request"),
         project: Optional[str] = Query(None, description="Override project scope for this request"),
         client: RallyClient = Depends(get_client),
     ) -> List[RallyDefectModel]:
+        if not workspace:
+            raise HTTPException(
+                status_code=400,
+                detail="Workspace query parameter is required.",
+            )
+
         try:
             defects = client.get_defects(
                 query=query,
@@ -123,12 +127,16 @@ def create_app() -> FastAPI:
     def defect_analysis(
         query: Optional[str] = Query(None, description="Optional filter on defects"),
         limit: Optional[int] = Query(None, ge=1, le=1000),
-        workspace: Optional[str] = Query(
-            None, description="Override workspace scope for this request"
-        ),
+        workspace: str = Query(..., description="Workspace scope for this request"),
         project: Optional[str] = Query(None, description="Override project scope for this request"),
         client: RallyClient = Depends(get_client),
     ) -> DefectAnalysisModel:
+        if not workspace:
+            raise HTTPException(
+                status_code=400,
+                detail="Workspace query parameter is required.",
+            )
+
         try:
             defects = client.get_defects(
                 query=query,

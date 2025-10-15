@@ -28,19 +28,18 @@ class RallyClient:
         self._auth = auth
         self._session = session or requests.Session()
 
-    def _base_params(self, workspace: Optional[str], project: Optional[str]) -> Dict[str, str]:
+    def _base_params(self, workspace: str, project: Optional[str]) -> Dict[str, str]:
         params: Dict[str, str] = {
             "pagesize": str(self._config.page_size),
             "include": "Permissions,Owner,SubmittedBy,Tags",
             "fetch": "true",
             "start": "1",
         }
-        effective_workspace = workspace or self._config.workspace
-        effective_project = project or self._config.project
-        if effective_workspace:
-            params["workspace"] = effective_workspace
-        if effective_project:
-            params["project"] = effective_project
+        if not workspace:
+            raise ValueError("Workspace scope is required.")
+        params["workspace"] = workspace
+        if project:
+            params["project"] = project
         return params
 
     def get_defects(
@@ -48,7 +47,7 @@ class RallyClient:
         query: Optional[str] = None,
         updated_after: Optional[datetime] = None,
         limit: Optional[int] = None,
-        workspace: Optional[str] = None,
+        workspace: str,
         project: Optional[str] = None,
     ) -> List[RallyDefect]:
         """Fetch defects from Rally, optionally filtered.

@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
-
 from dotenv import load_dotenv
 
 
@@ -14,9 +12,7 @@ class RallyConfig:
 
     api_key: str
     base_url: str = "https://rally1.rallydev.com"
-    workspace: Optional[str] = None
-    project: Optional[str] = None
-    page_size: int = 200
+    page_size: int = 2000
 
     @property
     def defects_endpoint(self) -> str:
@@ -45,18 +41,14 @@ def load_config(env_file: Optional[str] = None) -> RallyConfig:
         raise ValueError("Missing required environment variable RALLY_API_KEY.")
 
     base_url = getenv("RALLY_BASE_URL", "https://rally1.rallydev.com")
-    workspace = getenv("RALLY_WORKSPACE") or None
-    project = getenv("RALLY_PROJECT") or None
 
     try:
-        page_size = int(getenv("RALLY_PAGE_SIZE", "200"))
+        page_size = int(getenv("RALLY_PAGE_SIZE", "2000"))
     except ValueError as exc:
         raise ValueError("RALLY_PAGE_SIZE must be an integer.") from exc
 
     return RallyConfig(
         api_key=api_key,
         base_url=base_url,
-        workspace=workspace,
-        project=project,
         page_size=page_size,
     )

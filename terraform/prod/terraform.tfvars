@@ -22,14 +22,6 @@ container_environment = [
   {
     name  = "RALLY_BASE_URL"
     value = "https://rally1.rallydev.com"
-  },
-  {
-    name  = "RALLY_WORKSPACE"
-    value = "YourWorkspace"
-  },
-  {
-    name  = "RALLY_PROJECT"
-    value = "YourProject"
   }
 ]
 default_tags = {
