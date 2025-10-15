@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 from functools import lru_cache
 from typing import List, Optional
 
@@ -18,6 +19,21 @@ from .rally_client import RallyClient
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+
+
+def _parse_datetime(value: Optional[str], field: str) -> Optional[datetime]:
+    if value is None:
+        return None
+    try:
+        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid datetime format for {field}; use ISO 8601.",
+        ) from exc
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
 
 
 class RallyDefectModel(BaseModel):
@@ -101,6 +117,19 @@ def create_app() -> FastAPI:
         limit: Optional[int] = Query(None, ge=1, le=1000),
         workspace: str = Query(..., description="Workspace scope for this request"),
         project: Optional[str] = Query(None, description="Override project scope for this request"),
+        state: Optional[str] = Query(None, description='Filter by defect state, e.g. "Open"'),
+        created_after: Optional[str] = Query(
+            None, description="Only include defects created on/after this ISO timestamp"
+        ),
+        created_before: Optional[str] = Query(
+            None, description="Only include defects created on/before this ISO timestamp"
+        ),
+        updated_after: Optional[str] = Query(
+            None, description="Only include defects updated on/after this ISO timestamp"
+        ),
+        updated_before: Optional[str] = Query(
+            None, description="Only include defects updated on/before this ISO timestamp"
+        ),
         client: RallyClient = Depends(get_client),
     ) -> List[RallyDefectModel]:
         if not workspace:
@@ -109,12 +138,23 @@ def create_app() -> FastAPI:
                 detail="Workspace query parameter is required.",
             )
 
+        created_after_dt = _parse_datetime(created_after, "created_after")
+        created_before_dt = _parse_datetime(created_before, "created_before")
+        updated_after_dt = _parse_datetime(updated_after, "updated_after")
+        updated_before_dt = _parse_datetime(updated_before, "updated_before")
+        normalized_state = state.strip() if state else None
+
         try:
             defects = client.get_defects(
                 query=query,
                 limit=limit,
                 workspace=workspace,
                 project=project,
+                state=normalized_state,
+                created_after=created_after_dt,
+                created_before=created_before_dt,
+                updated_after=updated_after_dt,
+                updated_before=updated_before_dt,
             )
         except ValueError as exc:
             raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -129,6 +169,19 @@ def create_app() -> FastAPI:
         limit: Optional[int] = Query(None, ge=1, le=1000),
         workspace: str = Query(..., description="Workspace scope for this request"),
         project: Optional[str] = Query(None, description="Override project scope for this request"),
+        state: Optional[str] = Query(None, description='Filter by defect state, e.g. "Closed"'),
+        created_after: Optional[str] = Query(
+            None, description="Only include defects created on/after this ISO timestamp"
+        ),
+        created_before: Optional[str] = Query(
+            None, description="Only include defects created on/before this ISO timestamp"
+        ),
+        updated_after: Optional[str] = Query(
+            None, description="Only include defects updated on/after this ISO timestamp"
+        ),
+        updated_before: Optional[str] = Query(
+            None, description="Only include defects updated on/before this ISO timestamp"
+        ),
         client: RallyClient = Depends(get_client),
     ) -> DefectAnalysisModel:
         if not workspace:
@@ -137,12 +190,23 @@ def create_app() -> FastAPI:
                 detail="Workspace query parameter is required.",
             )
 
+        created_after_dt = _parse_datetime(created_after, "created_after")
+        created_before_dt = _parse_datetime(created_before, "created_before")
+        updated_after_dt = _parse_datetime(updated_after, "updated_after")
+        updated_before_dt = _parse_datetime(updated_before, "updated_before")
+        normalized_state = state.strip() if state else None
+
         try:
             defects = client.get_defects(
                 query=query,
                 limit=limit,
                 workspace=workspace,
                 project=project,
+                state=normalized_state,
+                created_after=created_after_dt,
+                created_before=created_before_dt,
+                updated_after=updated_after_dt,
+                updated_before=updated_before_dt,
             )
             analysis = analyze_defects(defects)
         except ValueError as exc:

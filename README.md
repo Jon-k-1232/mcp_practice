@@ -6,7 +6,7 @@ defect data, and surfaces analytics around potential root causes and trends.
 ## Features
 
 -  FastAPI service exposing `/defects` and `/defects/analysis` endpoints requiring a `workspace`
-   query parameter and optional per-call project overrides.
+   query parameter plus convenient filters for state and ISO8601 date ranges.
 -  Configurable through environment variables loaded from `.env`.
 -  Modular code structure splitting auth, client, and analytics logic.
 -  Heuristic analysis to highlight leading contributors and suspected causes.
@@ -67,6 +67,14 @@ defect data, and surfaces analytics around potential root causes and trends.
   ```
 
 -  Push your Docker image to the provisioned ECR repo using the value output as `ecr_repository_url`.
+
+### Example API Call
+
+Fetch closed defects updated in May 2024 for a given workspace:
+
+```bash
+curl "http://localhost:8000/defects?workspace=TeamWorkspace&state=closed&updated_after=2024-05-01T00:00:00Z&updated_before=2024-05-31T23:59:59Z"
+```
 
 ## Next Steps
 

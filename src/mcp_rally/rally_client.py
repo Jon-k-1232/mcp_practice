@@ -46,9 +46,13 @@ class RallyClient:
         self,
         query: Optional[str] = None,
         updated_after: Optional[datetime] = None,
+        updated_before: Optional[datetime] = None,
+        created_after: Optional[datetime] = None,
+        created_before: Optional[datetime] = None,
         limit: Optional[int] = None,
         workspace: str,
         project: Optional[str] = None,
+        state: Optional[str] = None,
     ) -> List[RallyDefect]:
         """Fetch defects from Rally, optionally filtered.
 
@@ -58,12 +62,20 @@ class RallyClient:
             Rally query string, e.g. `(State = "Open")`. See Rally WS API docs.
         updated_after:
             If provided, only defects updated since that timestamp are returned.
+        updated_before:
+            Upper bound on last update timestamp.
+        created_after:
+            Lower bound on creation timestamp.
+        created_before:
+            Upper bound on creation timestamp.
         limit:
             Maximum number of defects to return.
         workspace:
-            Optional workspace scope override.
+            Workspace scope identifier (required).
         project:
             Optional project scope override.
+        state:
+            Optional state filter (e.g., "Open", "Closed").
         """
 
         params = self._base_params(workspace=workspace, project=project)
@@ -75,6 +87,14 @@ class RallyClient:
             query_parts.append(normalized)
         if updated_after:
             query_parts.append(f"(LastUpdateDate >= {updated_after.isoformat()})")
+        if updated_before:
+            query_parts.append(f"(LastUpdateDate <= {updated_before.isoformat()})")
+        if created_after:
+            query_parts.append(f"(CreationDate >= {created_after.isoformat()})")
+        if created_before:
+            query_parts.append(f"(CreationDate <= {created_before.isoformat()})")
+        if state:
+            query_parts.append(f'(State = "{state}")')
         if query_parts:
             params["query"] = " AND ".join(query_parts)
 
