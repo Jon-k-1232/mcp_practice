@@ -172,6 +172,115 @@ Steps:
 5. The server applies the field updates (when the artifact type supports them) and posts the comment
    as a Rally ConversationPost.
 
+## AI Assistant Integration
+
+This project exposes Rally data and actions through the Model Context Protocol (MCP) over HTTP using
+FastAPI. The steps below outline how to register the server with popular MCP-capable assistants.
+
+### Claude Desktop
+
+1. Install the latest Claude desktop app (macOS/Windows) that supports MCP.
+2. Create or edit `~/.claude/config.yaml` (macOS) or `%APPDATA%\Claude\config.yaml` (Windows).
+3. Add an entry under `mcpServers`:
+
+   ```yaml
+   mcpServers:
+     mcp-rally:
+       command: python
+       args:
+         - -m
+         - mcp_rally.server
+       env:
+         RALLY_API_KEY: "<your_api_key>"
+   ```
+
+4. Restart Claude and open the MCP panel to enable the new “mcp-rally” tool.
+5. Ask Claude to run a command such as `call mcp-rally /defects ...` to verify connectivity.
+
+### GitHub Copilot (VS Code / JetBrains)
+
+1. Ensure you have the latest Copilot Chat extension (VS Code) or plugin (JetBrains) with MCP
+   support enabled (`copilot.experimental.mcp` flag in VS Code settings).
+2. Create `~/.config/github-copilot/mcp.json` (Linux/macOS) or
+   `%APPDATA%\GitHub Copilot\mcp.json` (Windows).
+3. Register the server:
+
+   ```json
+   {
+     "servers": {
+       "mcp-rally": {
+         "command": "python",
+         "args": ["-m", "mcp_rally.server"],
+         "env": {
+           "RALLY_API_KEY": "<your_api_key>"
+         }
+       }
+     }
+   }
+   ```
+
+4. Reload the IDE. In Copilot Chat, use `/tools` (VS Code) or the MCP tool picker to invoke the
+   Rally server.
+5. Run a sample prompt (e.g., “Use mcp-rally to analyze defects in workspace …”) to confirm the
+   integration.
+
+### ChatGPT Desktop / Web with MCP
+
+1. Opt into MCP beta in ChatGPT settings (if available in your account).
+2. Create `~/.openai/devtools/mcp.json` with:
+
+   ```json
+   {
+     "mcpServers": {
+       "mcp-rally": {
+         "command": "python",
+         "args": ["-m", "mcp_rally.server"],
+         "env": {
+           "RALLY_API_KEY": "<your_api_key>"
+         }
+       }
+     }
+   }
+   ```
+
+3. Restart the ChatGPT client. A new “mcp-rally” tool should appear under available integrations.
+4. Trigger the tool via `/mcp-rally` (desktop) or the Tools dropdown (web) and execute an endpoint to
+   ensure it responds.
+
+> **Note:** Paths/config formats may change as MCP support evolves. Consult the latest documentation
+> for each assistant if these locations differ.
+
+## Testing Workflows
+
+### Local Environment
+
+1. Activate your virtual environment and run the server:
+
+   ```bash
+   python scripts/run_server.py
+   ```
+
+2. Hit `http://localhost:8000/docs` to exercise endpoints interactively.
+3. Use `curl`, HTTPie, or your assistant integrations pointing to localhost to validate new logic.
+4. Install dev dependencies and execute the automated test suite (FastAPI integration checks and
+   transcript parsing coverage):
+
+   ```bash
+   pip install -e .[dev]
+   pytest
+   ```
+
+### Production/Staging
+
+1. Build and publish a Docker image that contains your changes.
+2. Update Terraform variables in `terraform/dev` or `terraform/prod` with the new image tag and
+   deploy via `terraform apply`.
+3. Configure the assistant environments to point at the deployed URL (instead of localhost) by
+   adjusting the `command`/`args` (e.g., run via a lightweight proxy) or by exposing the HTTP
+   endpoint through your infrastructure.
+4. Smoke-test endpoints using the same curl commands against the production load balancer before
+   enabling them for end-users.
+
 ## Next Steps
 
 -  Add persistence or caching for frequent analyses.
